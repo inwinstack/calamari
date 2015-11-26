@@ -3,6 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import dateformat
 
 from rest_framework import serializers
+from calamari_rest.models import AlertRules
 import dateutil.parser
 
 
@@ -198,3 +199,87 @@ class InfoSerializer(serializers.Serializer):
     bootstrap_url = serializers.CharField(help_text="URL to minion bootstrap script")
     bootstrap_rhel = serializers.CharField(help_text="Minion bootstrap command line for Red Hat systems")
     bootstrap_ubuntu = serializers.CharField(help_text="Minion bootstrap command line for Ubuntu systems")
+
+
+class AlertRuleSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'user',
+                  'osd_warning', 'osd_error',
+                  'monitor_warning', 'monitor_error',
+                  'pg_warning', 'pg_error',
+                  'usage_warning', 'usage_error',
+                  'general_polling',
+                  'abnormal_state_polling', 'abnormal_server_state_polling')
+
+
+class OSDWarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'osd_warning')
+
+
+class OSDErrorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'osd_error')
+
+
+class MonitorWarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'monitor_warning')
+
+
+class MonitorErrorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'monitor_error')
+
+
+class PGWarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'pg_warning')
+
+
+class PGErrorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'pg_error')
+
+
+class UsageWarningSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'usage_warning')
+
+
+class UsageErrorSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'usage_error')
+
+
+class GeneralPollingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'general_polling')
+
+
+class AbnormalStatePollingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'abnormal_state_polling')
+
+
+class AbnormalServerStatePollingSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'abnormal_server_state_polling')
+
+
+class EmailNotificationSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertRules
+        fields = ('id', 'email_notify')

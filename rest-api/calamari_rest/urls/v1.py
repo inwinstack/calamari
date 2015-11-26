@@ -2,6 +2,7 @@ from django.conf.urls import patterns, include, url
 from rest_framework import routers
 import calamari_rest.views.v1
 
+
 router = routers.DefaultRouter(trailing_slash=False)
 
 # In v1, the user/ URL existed but did almost nothing, it only supported GET and told
@@ -18,6 +19,29 @@ router.register(r'cluster', calamari_rest.views.v1.ClusterViewSet, base_name='cl
 
 urlpatterns = patterns(
     '',
+    # In v1 this required a GET for alert rule
+    url(r'^user/me/alert_rule$', calamari_rest.views.v1.AlertRuleViewSet.as_view({'get': 'get'}), name="alert_rules"),
+
+    # In v1 this required a POST osd warning and error value
+    url(r'^user/me/osd/warning$', calamari_rest.views.v1.OSDWaringViewSet.as_view({'post': 'update'}), name="osd_warning"),
+    url(r'^user/me/osd/error$', calamari_rest.views.v1.OSDErrorViewSet.as_view({'post': 'update'}), name="osd_error"),
+
+    # In v1 this required a POST monitor warning and error value
+    url(r'^user/me/monitor/warning$', calamari_rest.views.v1.MonitorWaringViewSet.as_view({'post': 'update'}), name="monitor_warning"),
+    url(r'^user/me/monitor/error$', calamari_rest.views.v1.MonitorErrorViewSet.as_view({'post': 'update'}), name="monitor_error"),
+
+    # In v1 this required a POST pg warning and error value
+    url(r'^user/me/pg/warning$', calamari_rest.views.v1.PGWaringViewSet.as_view({'post': 'update'}), name="pg_warning"),
+    url(r'^user/me/pg/error$', calamari_rest.views.v1.PGErrorViewSet.as_view({'post': 'update'}), name="pg_error"),
+
+    # In v1 this required a POST usage warning and error value
+    url(r'^user/me/usage/warning$', calamari_rest.views.v1.UsageWaringViewSet.as_view({'post': 'update'}), name="usage_warning"),
+    url(r'^user/me/usage/error$', calamari_rest.views.v1.UsageErrorViewSet.as_view({'post': 'update'}), name="usage_error"),
+
+    # In v1 this required a POST general, abnormal state and abnormal server state
+    url(r'^user/me/polling/general$', calamari_rest.views.v1.GeneralPollingViewSet.as_view({'post': 'update'}), name="general_polling"),
+    url(r'^user/me/polling/abnormal_state$', calamari_rest.views.v1.AbnormalStatePollingViewSet.as_view({'post': 'update'}), name="abnormal_state_polling"),
+    url(r'^user/me/polling/abnormal_server_state$', calamari_rest.views.v1.AbnormalServerStatePollingViewSet.as_view({'post': 'update'}), name="abnormal_server_state_polling"),
 
     # In v1 this required a POST but also allowed GET for some reason
     # In v2 it's post only

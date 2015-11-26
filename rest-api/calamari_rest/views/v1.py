@@ -11,7 +11,7 @@ from rest_framework.exceptions import AuthenticationFailed
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from rest_framework.decorators import permission_classes
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework import status
 from django.contrib.auth import authenticate, login as auth_login, logout as auth_logout
 from django.views.decorators.cache import never_cache
@@ -21,6 +21,8 @@ from rest_framework.views import APIView
 
 # Suppress warning from graphite's use of old django API
 import warnings
+from calamari_rest import permissions
+
 warnings.filterwarnings("ignore", category=DeprecationWarning,
                         message="django.conf.urls.defaults is deprecated")
 
@@ -37,6 +39,7 @@ from calamari_rest.viewsets import RoleLimitedViewSet
 from calamari_common.types import POOL, OSD, ServiceId, OsdMap, PgSummary, MdsMap, MonStatus
 from calamari_rest.views.server_metadata import get_local_grains
 
+
 try:
     from calamari_rest.version import VERSION
 except ImportError:
@@ -47,6 +50,13 @@ except ImportError:
 from calamari_rest.serializers.v1 import ClusterSpaceSerializer, ClusterHealthSerializer, UserSerializer, \
     ClusterSerializer, OSDDetailSerializer, OSDListSerializer, ClusterHealthCountersSerializer, \
     PoolSerializer, ServerSerializer, InfoSerializer
+
+from calamari_rest.models import AlertRules
+from calamari_rest.serializers.v1 import AlertRuleSerializer, OSDWarningSerializer, OSDErrorSerializer, \
+    MonitorWarningSerializer, MonitorErrorSerializer, PGWarningSerializer, PGErrorSerializer, \
+    UsageWarningSerializer, UsageErrorSerializer, GeneralPollingSerializer, AbnormalStatePollingSerializer, \
+    AbnormalServerStatePollingSerializer
+
 from calamari_common.config import CalamariConfig
 
 
@@ -653,3 +663,135 @@ class PoolViewSet(RPCViewSet):
         cluster = self.client.get_cluster(fsid)
         pool = self.pool_object(self.client.get(fsid, POOL, int(pool_id)), cluster)
         return Response(PoolSerializer(pool).data)
+
+
+@permission_classes((IsAuthenticated,))
+class AlertRuleViewSet(viewsets.ModelViewSet):
+    """
+The resource is used to get alert rules
+    """
+    queryset = AlertRules.objects.all()
+    serializer_class = AlertRuleSerializer
+
+    def get(self, request):
+        try:
+            alert_rule = self.queryset.get(user_id=request.user.id)
+        except AlertRules.DoesNotExist:
+            alert_rule = AlertRules(user_id=request.user.id)
+            alert_rule.save()
+            return Response(AlertRuleSerializer(alert_rule).data)
+        else:
+            return Response(AlertRuleSerializer(alert_rule).data)
+
+
+@permission_classes((IsAuthenticated,))
+class BasePostViewSet(viewsets.ModelViewSet):
+    """
+The class is base post view set
+    """
+    queryset = AlertRules.objects.all()
+    serializer_class = None
+    key = None
+
+    def update(self, request):
+        if request.DATA[self.key].isdigit():
+            try:
+                update_dict = {self.key: request.DATA[self.key]}
+                if AlertRules.objects.filter(user_id=request.user.id).update(**update_dict):
+                    return Response({'detail': 'Update success'})
+            except AlertRules.DoesNotExist:
+                return Response({'detail': 'Update failed, Not found user_id'})
+            else:
+                AlertRules(user_id=request.user.id).save()
+                AlertRules.objects.filter(user_id=request.user.id).update(**update_dict)
+                return Response({'detail': 'Update success'})
+        else:
+            return Response({'detail': 'Update failed, Not a number value'})
+
+
+class OSDWarningViewSet(BasePostViewSet):
+    """
+The resource is used to post osd warning value
+    """
+    serializer_class = OSDWarningSerializer
+    key = 'osd_warning'
+
+
+class OSDErrorViewSet(BasePostViewSet):
+    """
+The resource is used to post osd error value
+    """
+    serializer_class = OSDErrorSerializer
+    key = 'osd_error'
+
+
+class MonitorWarningViewSet(BasePostViewSet):
+    """
+The resource is used to post monitor warning value
+    """
+    serializer_class = MonitorWarningSerializer
+    key = 'monitor_warning'
+
+
+class MonitorErrorViewSet(BasePostViewSet):
+    """
+The resource is used to post monitor error value
+    """
+    serializer_class = MonitorErrorSerializer
+    key = 'monitor_error'
+
+
+class PGWarningViewSet(BasePostViewSet):
+    """
+The resource is used to post pg warning value
+    """
+    serializer_class = PGWarningSerializer
+    key = 'pg_warning'
+
+
+class PGErrorViewSet(BasePostViewSet):
+    """
+The resource is used to post pg error value
+    """
+    serializer_class = PGErrorSerializer
+    key = 'pg_error'
+
+
+class UsageWarningViewSet(BasePostViewSet):
+    """
+The resource is used to post usage warning value
+    """
+    serializer_class = UsageWarningSerializer
+    key = 'usage_warning'
+
+
+class UsageErrorViewSet(BasePostViewSet):
+    """
+The resource is used to post usage error value
+    """
+    serializer_class = UsageErrorSerializer
+    key = 'usage_error'
+
+
+class GeneralPollingViewSet(BasePostViewSet):
+    """
+The resource is used to post general polling value
+    """
+    serializer_class = GeneralPollingSerializer
+    key = 'general_polling'
+
+
+class AbnormalStatePollingViewSet(BasePostViewSet):
+    """
+The resource is used to post abnormal state polling value
+    """
+    serializer_class = AbnormalStatePollingSerializer
+    key = 'abnormal_state_polling'
+
+
+class AbnormalServerStatePollingViewSet(BasePostViewSet):
+    """
+The resource is used to post abnormal server state polling value
+    """
+    serializer_class = AbnormalServerStatePollingSerializer
+    key = 'abnormal_server_state_polling'
