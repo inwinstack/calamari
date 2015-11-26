@@ -21,7 +21,6 @@ from rest_framework.views import APIView
 
 # Suppress warning from graphite's use of old django API
 import warnings
-from calamari_rest import permissions
 
 warnings.filterwarnings("ignore", category=DeprecationWarning,
                         message="django.conf.urls.defaults is deprecated")
@@ -55,7 +54,7 @@ from calamari_rest.models import AlertRules
 from calamari_rest.serializers.v1 import AlertRuleSerializer, OSDWarningSerializer, OSDErrorSerializer, \
     MonitorWarningSerializer, MonitorErrorSerializer, PGWarningSerializer, PGErrorSerializer, \
     UsageWarningSerializer, UsageErrorSerializer, GeneralPollingSerializer, AbnormalStatePollingSerializer, \
-    AbnormalServerStatePollingSerializer
+    AbnormalServerStatePollingSerializer, EmailNotificationSerializer
 
 from calamari_common.config import CalamariConfig
 
@@ -691,10 +690,16 @@ The class is base post view set
     """
     queryset = AlertRules.objects.all()
     serializer_class = None
+    check_range = None
     key = None
 
     def update(self, request):
         if request.DATA[self.key].isdigit():
+            check_error = self.checking(request, self.check_range)
+
+            if check_error is not None:
+                return check_error
+
             try:
                 update_dict = {self.key: request.DATA[self.key]}
                 if AlertRules.objects.filter(user_id=request.user.id).update(**update_dict):
@@ -707,6 +712,12 @@ The class is base post view set
                 return Response({'detail': 'Update success'})
         else:
             return Response({'detail': 'Update failed, Not a number value'})
+
+    def checking(self, request, check_range):
+        if check_range is not None:
+            value = int(request.DATA[self.key])
+            if value < check_range['min'] or value > check_range['max']:
+                return Response({'detail': 'Update failed, Out of range'})
 
 
 class OSDWarningViewSet(BasePostViewSet):
@@ -747,6 +758,7 @@ The resource is used to post pg warning value
     """
     serializer_class = PGWarningSerializer
     key = 'pg_warning'
+    check_range = {'min': 1, 'max': 100}
 
 
 class PGErrorViewSet(BasePostViewSet):
@@ -755,6 +767,7 @@ The resource is used to post pg error value
     """
     serializer_class = PGErrorSerializer
     key = 'pg_error'
+    check_range = {'min': 1, 'max': 100}
 
 
 class UsageWarningViewSet(BasePostViewSet):
@@ -763,6 +776,7 @@ The resource is used to post usage warning value
     """
     serializer_class = UsageWarningSerializer
     key = 'usage_warning'
+    check_range = {'min': 1, 'max': 100}
 
 
 class UsageErrorViewSet(BasePostViewSet):
@@ -771,6 +785,7 @@ The resource is used to post usage error value
     """
     serializer_class = UsageErrorSerializer
     key = 'usage_error'
+    check_range = {'min': 1, 'max': 100}
 
 
 class GeneralPollingViewSet(BasePostViewSet):
@@ -795,3 +810,13 @@ The resource is used to post abnormal server state polling value
     """
     serializer_class = AbnormalServerStatePollingSerializer
     key = 'abnormal_server_state_polling'
+
+
+class EmailNotificationViewSet(BasePostViewSet):
+    """
+The resource is used to post email notification value
+    """
+    serializer_class = EmailNotificationSerializer
+    key = 'enable_email_notify'
+    check_range = {'min': 0, 'max': 1}
+

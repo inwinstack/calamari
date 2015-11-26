@@ -4,7 +4,7 @@ from django.contrib.auth.models import User
 
 class AlertRules(models.Model):
 
-    user = models.ForeignKey(User, unique=True, related_name='user_id')
+    user = models.ForeignKey(User, unique=True)
     osd_warning = models.CharField(max_length=100, default='1')
     osd_error = models.CharField(max_length=100, default='1')
     monitor_warning = models.CharField(max_length=100, default='1')
@@ -16,3 +16,4 @@ class AlertRules(models.Model):
     general_polling = models.CharField(max_length=100, default='15')
     abnormal_state_polling = models.CharField(max_length=100, default='15')
     abnormal_server_state_polling = models.CharField(max_length=100, default='15')
+    enable_email_notify = models.CharField(max_length=1, default='1')

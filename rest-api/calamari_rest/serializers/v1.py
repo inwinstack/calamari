@@ -210,7 +210,8 @@ class AlertRuleSerializer(serializers.ModelSerializer):
                   'pg_warning', 'pg_error',
                   'usage_warning', 'usage_error',
                   'general_polling',
-                  'abnormal_state_polling', 'abnormal_server_state_polling')
+                  'abnormal_state_polling', 'abnormal_server_state_polling',
+                  'enable_email_notify')
 
 
 class OSDWarningSerializer(serializers.ModelSerializer):
@@ -282,4 +283,4 @@ class AbnormalServerStatePollingSerializer(serializers.ModelSerializer):
 class EmailNotificationSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlertRules
-        fields = ('id', 'email_notify')
+        fields = ('id', 'enable_email_notify')
