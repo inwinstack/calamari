@@ -27,8 +27,8 @@ urlpatterns = patterns(
     url(r'^user/me/osd/error$', calamari_rest.views.v1.OSDErrorViewSet.as_view({'post': 'update'}), name="osd_error"),
 
     # In v1 this required a POST monitor warning and error value
-    url(r'^user/me/monitor/warning$', calamari_rest.views.v1.MonitorWarningViewSet.as_view({'post': 'update'}), name="monitor_warning"),
-    url(r'^user/me/monitor/error$', calamari_rest.views.v1.MonitorErrorViewSet.as_view({'post': 'update'}), name="monitor_error"),
+    url(r'^user/me/mon/warning$', calamari_rest.views.v1.MonitorWarningViewSet.as_view({'post': 'update'}), name="monitor_warning"),
+    url(r'^user/me/mon/error$', calamari_rest.views.v1.MonitorErrorViewSet.as_view({'post': 'update'}), name="monitor_error"),
 
     # In v1 this required a POST pg warning and error value
     url(r'^user/me/pg/warning$', calamari_rest.views.v1.PGWarningViewSet.as_view({'post': 'update'}), name="pg_warning"),
@@ -44,7 +44,7 @@ urlpatterns = patterns(
     url(r'^user/me/polling/abnormal_server_state$', calamari_rest.views.v1.AbnormalServerStatePollingViewSet.as_view({'post': 'update'}), name="abnormal_server_state_polling"),
 
     # In v1 this required a POST to enable or disable email notify
-    url(r'^user/me/email/notify', calamari_rest.views.v1.EmailNotificationViewSet.as_view({'post': 'update'}), name="email_notify"),
+    url(r'^user/me/email/notify$', calamari_rest.views.v1.EmailNotificationViewSet.as_view({'post': 'update'}), name="email_notify"),
 
     # In v1 this required a POST but also allowed GET for some reason
     # In v2 it's post only
