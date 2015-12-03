@@ -206,7 +206,7 @@ class AlertRuleSerializer(serializers.ModelSerializer):
         model = AlertRules
         fields = ('id', 'user',
                   'osd_warning', 'osd_error',
-                  'monitor_warning', 'monitor_error',
+                  'mon_warning', 'mon_error',
                   'pg_warning', 'pg_error',
                   'usage_warning', 'usage_error',
                   'general_polling',
@@ -229,13 +229,13 @@ class OSDErrorSerializer(serializers.ModelSerializer):
 class MonitorWarningSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlertRules
-        fields = ('id', 'monitor_warning')
+        fields = ('id', 'mon_warning')
 
 
 class MonitorErrorSerializer(serializers.ModelSerializer):
     class Meta:
         model = AlertRules
-        fields = ('id', 'monitor_error')
+        fields = ('id', 'mon_error')
 
 
 class PGWarningSerializer(serializers.ModelSerializer):

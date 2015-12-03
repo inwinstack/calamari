@@ -741,7 +741,7 @@ class MonitorWarningViewSet(BasePostViewSet):
 The resource is used to post monitor warning value
     """
     serializer_class = MonitorWarningSerializer
-    key = 'monitor_warning'
+    key = 'mon_warning'
 
 
 class MonitorErrorViewSet(BasePostViewSet):
@@ -749,7 +749,7 @@ class MonitorErrorViewSet(BasePostViewSet):
 The resource is used to post monitor error value
     """
     serializer_class = MonitorErrorSerializer
-    key = 'monitor_error'
+    key = 'mon_error'
 
 
 class PGWarningViewSet(BasePostViewSet):
