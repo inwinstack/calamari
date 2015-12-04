@@ -39,6 +39,8 @@ function install_calamari(){
     python ${CALAMARI_HOME}/webapp/calamari/manage.py sql calamari_rest
     python ${CALAMARI_HOME}/webapp/calamari/manage.py syncdb
 
+    sudo chmod 777 /var/log/calamari/cthulhu.log
+    sudo chmod 777 /var/log/calamari/calamari.log
     sudo service apache2 restart
 
     echo "Install Complete ...."
