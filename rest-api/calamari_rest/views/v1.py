@@ -1,6 +1,7 @@
 from collections import defaultdict
 import logging
 import socket
+import math
 
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
@@ -678,9 +679,16 @@ The resource is used to get alert rules
         except AlertRules.DoesNotExist:
             alert_rule = AlertRules(user_id=request.user.id)
             alert_rule.save()
-            return Response(AlertRuleSerializer(alert_rule).data)
+            return Response(self.replace_keys(AlertRuleSerializer(alert_rule).data))
         else:
-            return Response(AlertRuleSerializer(alert_rule).data)
+            return Response(self.replace_keys(AlertRuleSerializer(alert_rule).data))
+
+    def replace_keys(self, model):
+        model['user_id'] = model['user']
+        del model['user']
+        for key in model.keys():
+            model[key] = int(model[key]) if key != 'enable_email_notify' else bool(int(model[key]))
+        return model
 
 
 @permission_classes((IsAuthenticated,))
@@ -720,15 +728,22 @@ The class is base post view set
                 return Response({'detail': 'Update failed, Out of range'})
 
 
-class OSDWarningViewSet(BasePostViewSet):
+class OSDWarningViewSet(BasePostViewSet, RPCViewSet):
     """
 The resource is used to post osd warning value
     """
     serializer_class = OSDWarningSerializer
     key = 'osd_warning'
+    check_range = {'min': 1, 'max': 2}
+
+    def checking(self, request, check_range):
+        cluster_id = self.client.list_clusters()[0]['id']
+        osds = self.client.list(cluster_id, OSD, {}, async=True)
+        check_range['max'] = len(osds.get()) / 2 if (len(osds.get()) / 2) > 1 else 1
+        return super(OSDWarningViewSet, self).checking(request, check_range)
 
 
-class OSDErrorViewSet(BasePostViewSet):
+class OSDErrorViewSet(OSDWarningViewSet):
     """
 The resource is used to post osd error value
     """
@@ -736,15 +751,23 @@ The resource is used to post osd error value
     key = 'osd_error'
 
 
-class MonitorWarningViewSet(BasePostViewSet):
+class MonitorWarningViewSet(BasePostViewSet, RPCViewSet):
     """
 The resource is used to post monitor warning value
     """
     serializer_class = MonitorWarningSerializer
     key = 'mon_warning'
+    check_range = {'min': 1, 'max': 2}
+
+    def checking(self, request, check_range):
+        cluster_id = self.client.list_clusters()[0]['id']
+        mon_status = self.client.get_sync_object(cluster_id, MonStatus.str, async=True)
+        mons = mon_status.get()['monmap']['mons']
+        check_range['max'] = math.floor(len(mons) / 2) if math.floor(len(mons) / 2) > 1 else 1
+        return super(MonitorWarningViewSet, self).checking(request, check_range)
 
 
-class MonitorErrorViewSet(BasePostViewSet):
+class MonitorErrorViewSet(MonitorWarningViewSet):
     """
 The resource is used to post monitor error value
     """
@@ -758,7 +781,7 @@ The resource is used to post pg warning value
     """
     serializer_class = PGWarningSerializer
     key = 'pg_warning'
-    check_range = {'min': 1, 'max': 100}
+    check_range = {'min': 20, 'max': 80}
 
 
 class PGErrorViewSet(BasePostViewSet):
@@ -767,7 +790,7 @@ The resource is used to post pg error value
     """
     serializer_class = PGErrorSerializer
     key = 'pg_error'
-    check_range = {'min': 1, 'max': 100}
+    check_range = {'min': 20, 'max': 80}
 
 
 class UsageWarningViewSet(BasePostViewSet):
@@ -776,7 +799,7 @@ The resource is used to post usage warning value
     """
     serializer_class = UsageWarningSerializer
     key = 'usage_warning'
-    check_range = {'min': 1, 'max': 100}
+    check_range = {'min': 5, 'max': 85}
 
 
 class UsageErrorViewSet(BasePostViewSet):
@@ -785,7 +808,19 @@ The resource is used to post usage error value
     """
     serializer_class = UsageErrorSerializer
     key = 'usage_error'
-    check_range = {'min': 1, 'max': 100}
+    check_range = {'min': 5, 'max': 85}
+
+    def checking(self, request, check_range):
+        queryset = AlertRules.objects.all()
+        alert_rule = None
+        try:
+            alert_rule = queryset.get(user_id=request.user.id)
+        except AlertRules.DoesNotExist:
+            alert_rule = AlertRules(user_id=request.user.id)
+            alert_rule.save()
+        finally:
+            check_range['min'] = int(AlertRuleSerializer(alert_rule).data['usage_warning'])
+            return super(UsageErrorViewSet, self).checking(request, check_range)
 
 
 class GeneralPollingViewSet(BasePostViewSet):

@@ -17,6 +17,9 @@ CALAMARI_BACKUP="/opt/calamari/backup"
 
 function install_calamari(){
     # Install calamari rest for alert rule
+    sudo chmod 777 /var/log/calamari/cthulhu.log
+    sudo chmod 777 /var/log/calamari/calamari.log
+
     echo "Backup nagative calamari_rest library ...."
     sudo mkdir ${CALAMARI_BACKUP}
     sudo mkdir ${CALAMARI_BACKUP}/views
@@ -36,11 +39,11 @@ function install_calamari(){
 
     echo "Sync alert database ...."
     source "${CALAMARI_ENV}/bin/activate"
+
+    python ${CALAMARI_HOME}/webapp/calamari/manage.py sqlclear calamari_rest
     python ${CALAMARI_HOME}/webapp/calamari/manage.py sql calamari_rest
     python ${CALAMARI_HOME}/webapp/calamari/manage.py syncdb
 
-    sudo chmod 777 /var/log/calamari/cthulhu.log
-    sudo chmod 777 /var/log/calamari/calamari.log
     sudo service apache2 restart
 
     echo "Install Complete ...."
