@@ -737,9 +737,10 @@ The resource is used to post osd warning value
     check_range = {'min': 1, 'max': 2}
 
     def checking(self, request, check_range):
-        cluster_id = self.client.list_clusters()[0]['id']
-        osds = self.client.list(cluster_id, OSD, {}, async=True)
-        check_range['max'] = len(osds.get()) / 2 if (len(osds.get()) / 2) > 1 else 1
+        if self.client.list_clusters():
+            cluster_id = self.client.list_clusters()[0]['id']
+            osds = self.client.list(cluster_id, OSD, {}, async=True)
+            check_range['max'] = len(osds.get()) / 2 if (len(osds.get()) / 2) > 1 else 1
         return super(OSDWarningViewSet, self).checking(request, check_range)
 
 
@@ -760,10 +761,11 @@ The resource is used to post monitor warning value
     check_range = {'min': 1, 'max': 2}
 
     def checking(self, request, check_range):
-        cluster_id = self.client.list_clusters()[0]['id']
-        mon_status = self.client.get_sync_object(cluster_id, MonStatus.str, async=True)
-        mons = mon_status.get()['monmap']['mons']
-        check_range['max'] = math.floor(len(mons) / 2) if math.floor(len(mons) / 2) > 1 else 1
+        if self.client.list_clusters():
+            cluster_id = self.client.list_clusters()[0]['id']
+            mon_status = self.client.get_sync_object(cluster_id, MonStatus.str, async=True)
+            mons = mon_status.get()['monmap']['mons']
+            check_range['max'] = math.floor(len(mons) / 2) if math.floor(len(mons) / 2) > 1 else 1
         return super(MonitorWarningViewSet, self).checking(request, check_range)
 
 
