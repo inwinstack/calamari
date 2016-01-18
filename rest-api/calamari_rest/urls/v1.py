@@ -19,6 +19,9 @@ router.register(r'cluster', calamari_rest.views.v1.ClusterViewSet, base_name='cl
 
 urlpatterns = patterns(
     '',
+    # In v1 this required a GET for alert history
+    url(r'^user/me/history$', calamari_rest.views.v1.AlertHistoryViewSet.as_view({'get': 'get'}), name="alert_history"),
+
     # In v1 this required a GET for alert rule
     url(r'^user/me/alert_rule$', calamari_rest.views.v1.AlertRuleViewSet.as_view({'get': 'get'}), name="alert_rules"),
 
