@@ -50,12 +50,14 @@ except ImportError:
 from calamari_rest.serializers.v1 import ClusterSpaceSerializer, ClusterHealthSerializer, UserSerializer, \
     ClusterSerializer, OSDDetailSerializer, OSDListSerializer, ClusterHealthCountersSerializer, \
     PoolSerializer, ServerSerializer, InfoSerializer
-
-from calamari_rest.models import AlertRules
 from calamari_rest.serializers.v1 import AlertRuleSerializer, OSDWarningSerializer, OSDErrorSerializer, \
     MonitorWarningSerializer, MonitorErrorSerializer, PGWarningSerializer, PGErrorSerializer, \
     UsageWarningSerializer, UsageErrorSerializer, GeneralPollingSerializer, AbnormalStatePollingSerializer, \
-    AbnormalServerStatePollingSerializer, EmailNotificationSerializer
+    AbnormalServerStatePollingSerializer, EmailNotificationSerializer, AlertHistorySerializer
+
+
+from calamari_rest.models import AlertRules, AlertHistory
+
 
 from calamari_common.config import CalamariConfig
 
@@ -857,3 +859,29 @@ The resource is used to post email notification value
     key = 'enable_email_notify'
     check_range = {'min': 0, 'max': 1}
 
+
+@permission_classes((IsAuthenticated,))
+class AlertHistoryViewSet(viewsets.ModelViewSet):
+    """
+The resource is used to get alert history
+    """
+    queryset = AlertHistory.objects.all()
+    serializer_class = AlertHistorySerializer
+
+    def get(self, request):
+        offset = 0 if 'offset' not in request.GET else request.GET['offset']
+        limit = 10 if 'limit' not in request.GET else request.GET['limit']
+        sort = "asc" if 'sort' not in request.GET else request.GET['sort']
+        sort_by = "id" if 'sort_by' not in request.GET else request.GET['sort_by']
+        Response([sort])
+        try:
+            history_query = self.queryset.filter(user_id=request.user.id)[offset:limit]
+            history_list = AlertHistorySerializer(history_query, many=True).data
+            sort_history_list = sorted(
+                history_list, key=lambda k: k[sort_by],
+                reverse=False if sort == "asc" else True
+            )
+        except AlertHistory.DoesNotExist:
+            return Response({})
+        else:
+            return Response(AlertHistorySerializer(sort_history_list, many=True).data)

@@ -3,7 +3,7 @@ from django.contrib.auth.models import User
 from django.utils import dateformat
 
 from rest_framework import serializers
-from calamari_rest.models import AlertRules
+from calamari_rest.models import AlertRules, AlertHistory
 import dateutil.parser
 
 
@@ -212,6 +212,16 @@ class AlertRuleSerializer(serializers.ModelSerializer):
                   'general_polling',
                   'abnormal_state_polling', 'abnormal_server_state_polling',
                   'enable_email_notify')
+
+
+class AlertHistorySerializer(serializers.ModelSerializer):
+    class Meta:
+        model = AlertHistory
+        fields = ('id', 'count',
+                  'code', 'level',
+                  'triggered', 'resolved',
+                  'status', 'event_message',
+                  'user_id')
 
 
 class OSDWarningSerializer(serializers.ModelSerializer):
