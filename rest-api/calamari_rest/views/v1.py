@@ -873,7 +873,6 @@ The resource is used to get alert history
         limit = 10 if 'limit' not in request.GET else request.GET['limit']
         sort = "asc" if 'sort' not in request.GET else request.GET['sort']
         sort_by = "id" if 'sort_by' not in request.GET else request.GET['sort_by']
-        Response([sort])
         try:
             history_query = self.queryset.filter(user_id=request.user.id)[offset:limit]
             history_list = AlertHistorySerializer(history_query, many=True).data
