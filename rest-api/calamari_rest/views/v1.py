@@ -6,6 +6,8 @@ import math
 from django.core.exceptions import ValidationError, PermissionDenied
 from django.core.urlresolvers import reverse
 from django.http import Http404
+from django.views.decorators.csrf import csrf_exempt
+
 import pytz
 from rest_framework import viewsets
 from rest_framework.exceptions import AuthenticationFailed
@@ -703,6 +705,7 @@ The class is base post view set
     check_range = None
     key = None
 
+    @csrf_exempt
     def update(self, request):
         if request.DATA[self.key].isdigit():
             check_error = self.checking(request, self.check_range)
