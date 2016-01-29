@@ -41,13 +41,11 @@ from calamari_rest.viewsets import RoleLimitedViewSet
 from calamari_common.types import POOL, OSD, ServiceId, OsdMap, PgSummary, MdsMap, MonStatus
 from calamari_rest.views.server_metadata import get_local_grains
 
-
 try:
     from calamari_rest.version import VERSION
 except ImportError:
     # could create version here if we wanted to be fancier
     VERSION = 'dev'
-
 
 from calamari_rest.serializers.v1 import ClusterSpaceSerializer, ClusterHealthSerializer, UserSerializer, \
     ClusterSerializer, OSDDetailSerializer, OSDListSerializer, ClusterHealthCountersSerializer, \
@@ -57,12 +55,9 @@ from calamari_rest.serializers.v1 import AlertRuleSerializer, OSDWarningSerializ
     UsageWarningSerializer, UsageErrorSerializer, GeneralPollingSerializer, AbnormalStatePollingSerializer, \
     AbnormalServerStatePollingSerializer, EmailNotificationSerializer, AlertHistorySerializer
 
-
 from calamari_rest.models import AlertRules, AlertHistory
 
-
 from calamari_common.config import CalamariConfig
-
 
 config = CalamariConfig()
 
@@ -653,7 +648,8 @@ class PoolViewSet(RPCViewSet):
             'name': pool_data['pool_name'],
             'quota_max_objects': pool_data['quota_max_objects'],
             'quota_max_bytes': pool_data['quota_max_bytes'],
-            'used_objects': get_latest_graphite("ceph.cluster.%s.pool.%s.num_objects" % (cluster['id'], pool_data['pool'])),
+            'used_objects': get_latest_graphite(
+                "ceph.cluster.%s.pool.%s.num_objects" % (cluster['id'], pool_data['pool'])),
             'used_bytes': get_latest_graphite("ceph.cluster.%s.pool.%s.num_bytes" % (cluster['id'], pool_data['pool']))
         })
 
@@ -873,11 +869,13 @@ The resource is used to get alert history
 
     def get(self, request):
         offset = 0 if 'offset' not in request.GET else request.GET['offset']
-        limit = 10 if 'limit' not in request.GET else request.GET['limit']
+        accepted_para = ('limit' in request.GET and (request.GET['limit'].isdigit() or request.GET['limit'] == '-1'))
+        limit = request.GET['limit'] if accepted_para else 10
         sort = "asc" if 'sort' not in request.GET else request.GET['sort']
         sort_by = "id" if 'sort_by' not in request.GET else request.GET['sort_by']
+
         try:
-            history_query = self.queryset.filter(user_id=request.user.id)[offset:limit]
+            history_query = self.get_query_data(request.user.id, offset, int(limit))
             history_list = AlertHistorySerializer(history_query, many=True).data
             sort_history_list = sorted(
                 history_list, key=lambda k: k[sort_by],
@@ -887,3 +885,9 @@ The resource is used to get alert history
             return Response({})
         else:
             return Response(AlertHistorySerializer(sort_history_list, many=True).data)
+
+    def get_query_data(self, user_id, offset, limit):
+        if limit > 0:
+            return self.queryset.filter(user_id=user_id)[offset:limit]
+        else:
+            return self.queryset.filter(user_id=user_id)
